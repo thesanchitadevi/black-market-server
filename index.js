@@ -18,6 +18,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const categoriesCollection = client.db('blackMarket').collection('categories');
+        const bookingsCollection = client.db('blackMarket').collection('bookings');
 
         app.get('/categories', async (req, res) => {
             const query = {};
@@ -31,6 +32,14 @@ async function run() {
             const product = await categoriesCollection.findOne(query);
             res.send(product);
         });
+
+
+        /* bookings */
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            const result = await bookingsCollection.insertOne(booking);
+            res.send(result)
+        })
 
     }
     finally {
