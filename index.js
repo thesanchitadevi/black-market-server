@@ -19,6 +19,7 @@ async function run() {
     try {
         const categoriesCollection = client.db('blackMarket').collection('categories');
         const bookingsCollection = client.db('blackMarket').collection('bookings');
+        const usersCollection = client.db('blackMarket').collection('users');
 
         app.get('/categories', async (req, res) => {
             const query = {};
@@ -35,15 +36,43 @@ async function run() {
 
 
         /* bookings */
+        app.get('/bookings', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+
+            const bookings = await bookingsCollection.find(query).toArray();
+            res.send(bookings);
+        })
+
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
+
+            const query = {
+
+                productName: booking.productName,
+            }
+
+            const alreadyBooked = await bookingsCollection.find(query).toArray();
+
+            if (alreadyBooked.length) {
+                const message = `Already booked ${booking.productName}`;
+                return res.send({ acknowledged: false, message });
+            }
+
             const result = await bookingsCollection.insertOne(booking);
             res.send(result)
+        });
+
+        /* users */
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
         })
 
     }
     finally {
-        
+
     }
 }
 
