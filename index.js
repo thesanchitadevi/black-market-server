@@ -45,6 +45,20 @@ async function run() {
         const sellersCollection = client.db('blackMarket').collection('sellers');
         const buyersCollection = client.db('blackMarket').collection('buyers');
 
+
+        // user verfiAdmin after verifyJWT
+        const verifyAdmin = async (req, res, next) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await usersCollection.findOne(query);
+
+            if (user?.role !== 'admin') {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
+            next();
+        }
+
         app.get('/categories', async (req, res) => {
             const query = {};
             const result = await categoriesCollection.find(query).toArray();
@@ -62,11 +76,11 @@ async function run() {
         /* bookings */
         app.get('/bookings', verifyJWT, async (req, res) => {
             const email = req.query.email;
-            const decodedEmail = req.decoded.email;
+            // const decodedEmail = req.decoded.email;
 
-            if (email !== decodedEmail) {
-                return res.status(403).send({ message: 'forbidden access' });
-            }
+            // if (email !== decodedEmail) {
+            //     return res.status(403).send({ message: 'forbidden access' });
+            // }
             
             const query = { email: email };
 
@@ -105,6 +119,30 @@ async function run() {
             // res.send({ accessToken: 'token' });
         })
 
+        /* admin */
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ isAdmin: user?.role === 'admin' })
+        })
+
+        /* seller */
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ isSeller: user?.role === 'seller' })
+        })
+
+        /* buyer */
+        app.get('/users/buyer/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ isBuyer: user?.role === 'buyer' })
+        })
+
         /* users */
         app.get('/users', async (req, res) => {
             const query = {};
@@ -118,7 +156,7 @@ async function run() {
             res.send(result);
         })
 
-        app.patch('/users/:id', async (req, res) => {
+        app.put('/users/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const status = req.body.status;
             const query = { _id: ObjectId(id) };
@@ -131,7 +169,7 @@ async function run() {
             res.send(result);
         })
 
-        app.delete('/users/:id', verifyJWT, async (req, res) => {
+        app.delete('/users/:id', verifyJWT,verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const result = await usersCollection.deleteOne(filter);
