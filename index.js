@@ -42,6 +42,8 @@ async function run() {
         const categoriesCollection = client.db('blackMarket').collection('categories');
         const bookingsCollection = client.db('blackMarket').collection('bookings');
         const usersCollection = client.db('blackMarket').collection('users');
+        const sellersCollection = client.db('blackMarket').collection('sellers');
+        const buyersCollection = client.db('blackMarket').collection('buyers');
 
         app.get('/categories', async (req, res) => {
             const query = {};
@@ -76,7 +78,6 @@ async function run() {
             const booking = req.body;
 
             const query = {
-
                 productName: booking.productName,
             }
 
@@ -114,6 +115,26 @@ async function run() {
         app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await usersCollection.insertOne(user);
+            res.send(result);
+        })
+
+        app.patch('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const status = req.body.status;
+            const query = { _id: ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    status: status,
+                },
+            };
+            const result = await usersCollection.updateOne(query, updateDoc);
+            res.send(result);
+        })
+
+        app.delete('/users/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(filter);
             res.send(result);
         })
 
