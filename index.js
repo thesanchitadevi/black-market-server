@@ -20,6 +20,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 function verifyJWT(req, res, next) {
 
     const authHeader = req.headers.authorization;
+    console.log(authHeader);
     if (!authHeader) {
         return res.status(401).send('unauthorized access');
     }
@@ -42,8 +43,8 @@ async function run() {
         const categoriesCollection = client.db('blackMarket').collection('categories');
         const bookingsCollection = client.db('blackMarket').collection('bookings');
         const usersCollection = client.db('blackMarket').collection('users');
-        const sellersCollection = client.db('blackMarket').collection('sellers');
-        const buyersCollection = client.db('blackMarket').collection('buyers');
+        const productsCollection = client.db('blackMarket').collection('products');
+        // const buyersCollection = client.db('blackMarket').collection('buyers');
 
 
         // user verfiAdmin after verifyJWT
@@ -76,11 +77,11 @@ async function run() {
         /* bookings */
         app.get('/bookings', verifyJWT, async (req, res) => {
             const email = req.query.email;
-            // const decodedEmail = req.decoded.email;
+            const decodedEmail = req.decoded.email;
 
-            // if (email !== decodedEmail) {
-            //     return res.status(403).send({ message: 'forbidden access' });
-            // }
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
             
             const query = { email: email };
 
@@ -106,6 +107,7 @@ async function run() {
             res.send(result)
         });
 
+        /* jwt */
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
@@ -156,7 +158,7 @@ async function run() {
             res.send(result);
         })
 
-        app.put('/users/:id', verifyJWT, async (req, res) => {
+        app.put('/users/:id',  async (req, res) => {
             const id = req.params.id;
             const status = req.body.status;
             const query = { _id: ObjectId(id) };
@@ -166,6 +168,7 @@ async function run() {
                 },
             };
             const result = await usersCollection.updateOne(query, updateDoc);
+            console.log(result);
             res.send(result);
         })
 
@@ -173,6 +176,26 @@ async function run() {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const result = await usersCollection.deleteOne(filter);
+            res.send(result);
+        })
+
+        /* products api */
+        app.get('/products',  async (req, res) => {
+            const query = {};
+            const products = await productsCollection.find(query).toArray();
+            res.send(products);
+        });
+
+        app.post('/products',  async (req, res) => {
+            const product = req.body;
+            const result = await productsCollection.insertOne(product);
+            res.send(result);
+        });
+
+        app.delete('/products/:id',  async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await productsCollection.deleteOne(filter);
             res.send(result);
         })
 
